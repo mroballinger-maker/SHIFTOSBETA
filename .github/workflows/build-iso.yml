@@ -9,25 +9,23 @@ jobs:
   build:
     name: Build Debian 13 live/installable ISO
     runs-on: ubuntu-24.04
-    container:
-      image: debian:trixie-slim
     timeout-minutes: 360
     steps:
       - name: Check out SHIFT OS source
         uses: actions/checkout@v4
       - name: Install ISO build dependencies
         run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             ca-certificates live-build debootstrap cpio apt-utils xorriso \
             squashfs-tools grub-pc-bin grub-efi-amd64-bin mtools dosfstools \
-            systemd-container rsync python3 python3-pil
+            rsync python3 python3-pil
       - name: Build SHIFT OS
         run: |
           chmod +x ./build.sh
           chmod +x ./auto/config
           chmod +x ./config/hooks/live/0900-shift-branding.hook.chroot
-          ./build.sh
+          sudo ./build.sh
       - name: Upload ISO and checksum
         uses: actions/upload-artifact@v4
         with:
