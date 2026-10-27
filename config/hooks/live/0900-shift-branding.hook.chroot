@@ -14,6 +14,16 @@ OSRELEASE
 cat > /etc/issue <<'ISSUE'
 SHIFT OS 1.0 \n \l
 ISSUE
+# Add Debian 13's current security suite explicitly. Ubuntu's packaged
+# live-build has legacy suite naming, so security is not enabled during assembly.
+mkdir -p /etc/apt/sources.list.d
+cat > /etc/apt/sources.list.d/debian-security.sources <<'SOURCES'
+Types: deb
+URIs: https://security.debian.org/debian-security
+Suites: trixie-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+SOURCES
 if [ -f /etc/calamares/settings.conf ]; then
   sed -i -E 's/^branding:[[:space:]]*debian[[:space:]]*$/branding: shift/' /etc/calamares/settings.conf
 fi
