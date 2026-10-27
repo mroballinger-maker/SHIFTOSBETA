@@ -1,0 +1,6 @@
+[General]
+ColorScheme=SHIFT-Ocean
+[KDE]
+LookAndFeelPackage=org.kde.breeze.desktop
+[Icons]
+Theme=breeze
