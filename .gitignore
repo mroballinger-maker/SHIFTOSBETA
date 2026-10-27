@@ -1,0 +1,12 @@
+/build/
+/chroot/
+/binary/
+/cache/
+/auto/build
+/auto/clean
+/auto/copy
+/auto/package
+/auto/update
+/live-image-*.iso
+/SHIFT-OS-1.0-amd64.iso
+/SHIFT-OS-1.0-amd64.iso.sha256
