@@ -5,7 +5,7 @@ lb config noauto \
   --distribution trixie \
   --architectures amd64 \
   --binary-images iso-hybrid \
-  --bootloader grub \
+  --bootloaders "grub-pc grub-efi" \
   --initsystem systemd \
   --archive-areas "main contrib non-free non-free-firmware" \
   --mirror-bootstrap "http://deb.debian.org/debian/" \
