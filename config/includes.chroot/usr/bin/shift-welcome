@@ -179,7 +179,7 @@ class WelcomeWindow(QWidget):
             "Install SHIFT OS",
             "Ready to install? The installer will guide you through choosing a destination disk.",
             "Launch installer",
-            lambda: self._launch("pkexec", ["calamares"])
+            lambda: self._launch("/usr/bin/calamares-install-debian")
         ))
         layout.addLayout(cards, 1)
         warning = QLabel("Installing to a disk can erase its contents. Back up anything important first.")

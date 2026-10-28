@@ -37,12 +37,14 @@ cat > /etc/skel/Desktop/Install-SHIFT-OS.desktop <<'DESKTOP'
 Type=Application
 Name=Install SHIFT OS
 Comment=Install SHIFT OS on this computer
-Exec=pkexec calamares
+Exec=calamares-install-debian
 Icon=/usr/share/pixmaps/shift-os.png
 Terminal=false
 Categories=System;
 DESKTOP
 chmod 0755 /etc/skel/Desktop/Install-SHIFT-OS.desktop
+# Use Debian's live-session wrapper for X11 authorization and the polkit launch.
+test -x /usr/bin/calamares-install-debian
 test -x /usr/bin/shift-welcome
 cat > /usr/share/applications/shift-welcome.desktop <<'WELCOMEAPP'
 [Desktop Entry]
