@@ -12,7 +12,7 @@ DEBIAN_CODENAME=trixie
 ANSI_COLOR="0;36"
 OSRELEASE
 cat > /etc/issue <<'ISSUE'
-SHIFT OS 1.0 \n \l
+SHIFT OS 1.0 \\n \\l
 ISSUE
 # Add Debian 13's current security suite explicitly. Ubuntu's packaged
 # live-build has legacy suite naming, so security is not enabled during assembly.
@@ -28,7 +28,7 @@ if [ -f /etc/calamares/settings.conf ]; then
   sed -i -E 's/^branding:[[:space:]]*debian[[:space:]]*$/branding: shift/' /etc/calamares/settings.conf
 fi
 rm -f /etc/xdg/autostart/calamares-desktop-icon.desktop
-mkdir -p /etc/skel/Desktop /usr/share/doc/shift-os
+mkdir -p /etc/skel/Desktop /etc/skel/.config /usr/share/doc/shift-os
 cat > /etc/skel/Desktop/Install-SHIFT-OS.desktop <<'DESKTOP'
 [Desktop Entry]
 Type=Application
@@ -40,6 +40,132 @@ Terminal=false
 Categories=System;
 DESKTOP
 chmod 0755 /etc/skel/Desktop/Install-SHIFT-OS.desktop
+# Let Plasma create its own version-matched panel and applet layout on first login.
+rm -f /etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
+cat > /etc/skel/.config/ksplashrc <<'KSPLASH'
+[KSplash]
+Engine=KSplashQML
+Theme=org.shiftos.desktop
+KSPLASH
+theme_dir=/usr/share/plasma/look-and-feel/org.shiftos.desktop
+mkdir -p "$theme_dir/contents/splash/images"
+cp /usr/share/pixmaps/shift-symbol.png "$theme_dir/contents/splash/images/shift-symbol.png"
+cat > "$theme_dir/metadata.json" <<'METADATA'
+{
+  "KPackageStructure": "Plasma/LookAndFeel",
+  "KPlugin": {
+    "Authors": [
+      {
+        "Name": "SHIFT OS Project"
+      }
+    ],
+    "Category": "Plasma Look And Feel",
+    "Description": "SHIFT OS Plasma splash screen",
+    "Id": "org.shiftos.desktop",
+    "License": "GPL-2.0-or-later",
+    "Name": "SHIFT OS",
+    "Version": "1.0"
+  },
+  "X-Plasma-APIVersion": "2"
+}
+METADATA
+cat > "$theme_dir/contents/splash/Splash.qml" <<'SPLASH'
+import QtQuick
+import org.kde.kirigami as Kirigami
+
+Rectangle {
+    id: root
+    color: "#0B1427"
+
+    property int stage
+
+    onStageChanged: {
+        if (stage === 2) {
+            introAnimation.running = true
+        } else if (stage === 5) {
+            introAnimation.target = content
+            introAnimation.from = 1
+            introAnimation.to = 0
+            introAnimation.running = true
+        }
+    }
+
+    Item {
+        id: content
+        anchors.fill: parent
+        opacity: 0
+
+        Image {
+            id: logo
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: parent.height * 0.32
+            width: Math.min(parent.width * 0.42, Kirigami.Units.gridUnit * 20)
+            height: width / 2
+            source: "images/shift-symbol.png"
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true
+        }
+
+        Text {
+            id: title
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: logo.y + logo.height + Kirigami.Units.gridUnit
+            text: "SHIFT OS"
+            color: "#EFF7FF"
+            font.pixelSize: Kirigami.Units.gridUnit * 2
+            font.bold: true
+        }
+
+        Text {
+            id: subtitle
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: title.y + title.height + Kirigami.Units.largeSpacing
+            text: "Preparing your desktop"
+            color: "#7EDAE8"
+            font.pixelSize: Kirigami.Units.gridUnit
+        }
+
+        Item {
+            id: busyIndicator
+            width: Kirigami.Units.gridUnit
+            height: Kirigami.Units.gridUnit
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: subtitle.y + subtitle.height + Kirigami.Units.gridUnit * 2
+
+            RotationAnimator on rotation {
+                from: 0
+                to: 360
+                duration: 1800
+                loops: Animation.Infinite
+                running: Kirigami.Units.longDuration > 1
+            }
+
+            Rectangle {
+                width: Kirigami.Units.smallSpacing * 2
+                height: width
+                radius: width / 2
+                color: "#23DCC6"
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+    }
+
+    OpacityAnimator {
+        id: introAnimation
+        running: false
+        target: content
+        from: 0
+        to: 1
+        duration: Kirigami.Units.veryLongDuration * 2
+        easing.type: Easing.InOutQuad
+    }
+}
+SPLASH
+python3 -m json.tool "$theme_dir/metadata.json" >/dev/null
+test -s "$theme_dir/contents/splash/Splash.qml"
+test -s "$theme_dir/contents/splash/images/shift-symbol.png"
+test ! -e /etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
+echo "Configured the SHIFT OS splash and Plasma's default widget layout."
 cat > /usr/share/doc/shift-os/README.html <<'HTML'
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>SHIFT OS</title><style>body{margin:3rem auto;max-width:48rem;padding:1.3rem;background:#0b1225;color:#e7f1fa;font:17px/1.7 sans-serif}h1{color:#2ddcc6}</style></head><body><h1>SHIFT OS 1.0</h1><p>A modern KDE Plasma desktop based on Debian GNU/Linux 13.</p><p>Explore the live system and launch Install SHIFT OS only when you are ready. Installing to a disk can erase its contents.</p></body></html>
 HTML
