@@ -24,11 +24,14 @@ Suites: trixie-security
 Components: main contrib non-free non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 SOURCES
-if [ -f /etc/calamares/settings.conf ]; then
+if [ -f /etc/calamares/settings.conf ] && [ -s /etc/calamares/branding/shift/branding.desc ]; then
   sed -i -E 's/^branding:[[:space:]]*debian[[:space:]]*$/branding: shift/' /etc/calamares/settings.conf
+else
+  echo "SHIFT OS Calamares branding or settings.conf is missing." >&2
+  exit 1
 fi
 rm -f /etc/xdg/autostart/calamares-desktop-icon.desktop
-mkdir -p /etc/skel/Desktop /etc/skel/.config /usr/share/doc/shift-os
+mkdir -p /etc/skel/Desktop /etc/skel/.config /etc/xdg/autostart /usr/share/applications /usr/share/doc/shift-os
 cat > /etc/skel/Desktop/Install-SHIFT-OS.desktop <<'DESKTOP'
 [Desktop Entry]
 Type=Application
@@ -40,6 +43,39 @@ Terminal=false
 Categories=System;
 DESKTOP
 chmod 0755 /etc/skel/Desktop/Install-SHIFT-OS.desktop
+test -x /usr/bin/shift-welcome
+cat > /usr/share/applications/shift-welcome.desktop <<'WELCOMEAPP'
+[Desktop Entry]
+Type=Application
+Name=Welcome to SHIFT OS
+Comment=Open the SHIFT OS welcome and setup guide
+Exec=/usr/bin/shift-welcome --show
+Icon=/usr/share/pixmaps/shift-os.png
+Terminal=false
+Categories=System;
+WELCOMEAPP
+cat > /etc/xdg/autostart/shift-welcome.desktop <<'AUTOSTART'
+[Desktop Entry]
+Type=Application
+Name=SHIFT OS Welcome
+Comment=First-run welcome and setup
+Exec=/usr/bin/shift-welcome --first-run
+Icon=/usr/share/pixmaps/shift-os.png
+Terminal=false
+OnlyShowIn=KDE;
+X-GNOME-Autostart-enabled=true
+AUTOSTART
+cat > /etc/skel/Desktop/Welcome-to-SHIFT-OS.desktop <<'WELCOMEICON'
+[Desktop Entry]
+Type=Application
+Name=Welcome to SHIFT OS
+Comment=Open the SHIFT OS welcome and setup guide
+Exec=/usr/bin/shift-welcome --show
+Icon=/usr/share/pixmaps/shift-os.png
+Terminal=false
+Categories=System;
+WELCOMEICON
+chmod 0755 /etc/skel/Desktop/Welcome-to-SHIFT-OS.desktop
 # Let Plasma create its own version-matched panel and applet layout on first login.
 rm -f /etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
 cat > /etc/skel/.config/ksplashrc <<'KSPLASH'

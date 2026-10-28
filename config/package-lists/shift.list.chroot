@@ -36,3 +36,4 @@ firmware-linux
 firmware-linux-nonfree
 python3
 python3-pil
+python3-pyqt6

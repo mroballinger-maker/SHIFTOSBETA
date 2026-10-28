@@ -1,0 +1,215 @@
+#!/usr/bin/python3
+import sys
+from pathlib import Path
+
+from PyQt6.QtCore import Qt, QProcess
+from PyQt6.QtGui import QColor, QPainter, QPixmap
+from PyQt6.QtWidgets import (
+    QApplication, QFrame, QHBoxLayout, QLabel, QMessageBox, QPushButton,
+    QStackedWidget, QVBoxLayout, QWidget
+)
+
+BACKGROUND = "/usr/share/backgrounds/shift-os/shift-os-welcome.png"
+SYMBOL = "/usr/share/pixmaps/shift-symbol.png"
+MARKER = Path.home() / ".config" / "shift-os" / "welcome-complete"
+
+
+class WelcomeWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Welcome to SHIFT OS")
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.background = QPixmap(BACKGROUND)
+        self.pages = QStackedWidget(self)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(self.pages)
+        self.setStyleSheet("""
+            QWidget { font-family: 'Noto Sans', 'DejaVu Sans', sans-serif; color: #F4F7FF; }
+            QWidget#page { background: transparent; }
+            QLabel#eyebrow { color: #8DE9E0; font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+            QLabel#headline { color: #FFFFFF; font-size: 44px; font-weight: 700; }
+            QLabel#subtitle { color: #D8E8F5; font-size: 18px; }
+            QFrame#setupCard {
+                background-color: rgba(8, 18, 40, 220);
+                border: 1px solid rgba(151, 213, 238, 95);
+                border-radius: 20px;
+            }
+            QLabel#cardTitle { color: #FFFFFF; font-size: 18px; font-weight: 700; }
+            QLabel#cardBody { color: #D2E0EE; font-size: 14px; }
+            QPushButton {
+                color: #0B1930; background-color: #F4D7B3; border: 0;
+                border-radius: 25px; padding: 14px 34px; font-size: 16px; font-weight: 700;
+            }
+            QPushButton:hover { background-color: #FFFFFF; }
+            QPushButton#secondary {
+                color: #F4F7FF; background-color: rgba(8, 18, 40, 130);
+                border: 1px solid rgba(207, 232, 248, 150); padding: 12px 28px;
+            }
+            QPushButton#smallAction {
+                color: #0B1930; background-color: #45DCC9; border-radius: 16px;
+                padding: 10px 16px; font-size: 14px;
+            }
+            QLabel#finePrint { color: #C7D3E1; font-size: 12px; }
+        """)
+        self.pages.addWidget(self._welcome_page())
+        self.pages.addWidget(self._setup_page())
+
+    def closeEvent(self, event):
+        try:
+            MARKER.parent.mkdir(parents=True, exist_ok=True)
+            MARKER.write_text("Welcome screen completed.\n", encoding="utf-8")
+        except OSError:
+            pass
+        event.accept()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        if not self.background.isNull():
+            painter.drawPixmap(self.rect(), self.background)
+        else:
+            painter.fillRect(self.rect(), QColor("#101A3A"))
+        painter.fillRect(self.rect(), QColor(5, 12, 30, 78))
+        painter.end()
+
+    def _logo(self, width=176):
+        label = QLabel()
+        pixmap = QPixmap(SYMBOL)
+        label.setPixmap(pixmap.scaledToWidth(width, Qt.TransformationMode.SmoothTransformation))
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        return label
+
+    def _welcome_page(self):
+        page = QWidget()
+        page.setObjectName("page")
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(56, 42, 56, 48)
+        eyebrow = QLabel("SHIFT OS  •  VERSION 1.0")
+        eyebrow.setObjectName("eyebrow")
+        eyebrow.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(eyebrow)
+        layout.addStretch(2)
+        center = QVBoxLayout()
+        center.setSpacing(14)
+        center.addWidget(self._logo(230))
+        title = QLabel("Welcome")
+        title.setObjectName("headline")
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        center.addWidget(title)
+        subtitle = QLabel("A fresh direction for your desktop.")
+        subtitle.setObjectName("subtitle")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        center.addWidget(subtitle)
+        layout.addLayout(center)
+        layout.addStretch(3)
+        actions = QHBoxLayout()
+        actions.addStretch()
+        start = QPushButton("Start")
+        start.setMinimumWidth(250)
+        start.clicked.connect(lambda: self.pages.setCurrentIndex(1))
+        actions.addWidget(start)
+        skip = QPushButton("Skip for now")
+        skip.setObjectName("secondary")
+        skip.clicked.connect(self.close)
+        actions.addWidget(skip)
+        actions.addStretch()
+        layout.addLayout(actions)
+        return page
+
+    def _card(self, title_text, body_text, button_text, action):
+        card = QFrame()
+        card.setObjectName("setupCard")
+        card.setMinimumWidth(245)
+        card.setMinimumHeight(300)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(22, 24, 22, 22)
+        layout.setSpacing(14)
+        title = QLabel(title_text)
+        title.setObjectName("cardTitle")
+        title.setWordWrap(True)
+        body = QLabel(body_text)
+        body.setObjectName("cardBody")
+        body.setWordWrap(True)
+        body.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(title)
+        layout.addWidget(body, 1)
+        button = QPushButton(button_text)
+        button.setObjectName("smallAction")
+        button.clicked.connect(action)
+        layout.addWidget(button)
+        return card
+
+    def _launch(self, program, args=None):
+        if not QProcess.startDetached(program, args or []):
+            QMessageBox.warning(
+                self, "Could not open the app",
+                "SHIFT OS could not start that app. You can open it from the desktop menu."
+            )
+
+    def _setup_page(self):
+        page = QWidget()
+        page.setObjectName("page")
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(58, 36, 58, 42)
+        layout.setSpacing(18)
+        eyebrow = QLabel("SHIFT OS  •  QUICK SETUP")
+        eyebrow.setObjectName("eyebrow")
+        layout.addWidget(eyebrow)
+        title = QLabel("Make it yours")
+        title.setObjectName("headline")
+        layout.addWidget(title)
+        subtitle = QLabel("A couple of simple steps will get your desktop ready.")
+        subtitle.setObjectName("subtitle")
+        layout.addWidget(subtitle)
+        cards = QHBoxLayout()
+        cards.setSpacing(16)
+        cards.addWidget(self._card(
+            "Connect to Wi-Fi",
+            "Choose a network from the network icon in the bottom panel, or open System Settings.",
+            "Open settings",
+            lambda: self._launch("systemsettings")
+        ))
+        cards.addWidget(self._card(
+            "Personalise your desktop",
+            "Adjust your display, colours, wallpaper and other desktop preferences.",
+            "Open settings",
+            lambda: self._launch("systemsettings")
+        ))
+        cards.addWidget(self._card(
+            "Install SHIFT OS",
+            "Ready to install? The installer will guide you through choosing a destination disk.",
+            "Launch installer",
+            lambda: self._launch("pkexec", ["calamares"])
+        ))
+        layout.addLayout(cards, 1)
+        warning = QLabel("Installing to a disk can erase its contents. Back up anything important first.")
+        warning.setObjectName("finePrint")
+        warning.setWordWrap(True)
+        layout.addWidget(warning)
+        actions = QHBoxLayout()
+        back = QPushButton("Back")
+        back.setObjectName("secondary")
+        back.clicked.connect(lambda: self.pages.setCurrentIndex(0))
+        actions.addWidget(back)
+        actions.addStretch()
+        finish = QPushButton("Finish setup")
+        finish.clicked.connect(self.close)
+        actions.addWidget(finish)
+        layout.addLayout(actions)
+        return page
+
+
+def main():
+    first_run = "--first-run" in sys.argv
+    if first_run and MARKER.exists():
+        return 0
+    app = QApplication(sys.argv)
+    app.setApplicationName("SHIFT OS Welcome")
+    window = WelcomeWindow()
+
+    window.showFullScreen()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

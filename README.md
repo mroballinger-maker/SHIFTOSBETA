@@ -9,7 +9,8 @@ A modern Debian 13 + KDE Plasma live desktop concept, themed with the SHIFT circ
 - Debian 13 (Trixie), amd64
 - KDE Plasma desktop and SDDM
 - Dark SHIFT Ocean theme and custom wallpaper
-- Calamares installer branding
+- SHIFT OS first-run welcome and quick setup guide
+- Branded Calamares installer welcome and setup screens
 - Hybrid ISO intended for virtual machines and USB installation
 
 ## Build
