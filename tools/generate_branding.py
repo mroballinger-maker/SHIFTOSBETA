@@ -143,7 +143,7 @@ for idx,(color,width,phase) in enumerate([((20,225,210,150),8,0.3),((45,139,255,
         y=210+28*math.sin(x/112+phase)+idx*14
         pts.append((x,int(y)))
     aw.line(pts,fill=color,width=width,joint="curve")
-mark=Image.open(IN/"usr/share/pixmaps/shift-symbol.png").convert("RGBA")
+mark=Image.open(INC/"usr/share/pixmaps/shift-symbol.png").convert("RGBA")
 mark.thumbnail((210,105),Image.Resampling.LANCZOS)
 welcome_art.alpha_composite(mark,((760-mark.width)//2,48))
 aw=ImageDraw.Draw(welcome_art)
