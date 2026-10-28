@@ -29,6 +29,15 @@ jobs:
           chmod +x ./auto/config
           chmod +x ./config/hooks/live/0900-shift-branding.hook.chroot
           ./build.sh
+      - name: Verify live kernel and initrd in ISO
+        run: |
+          set -eu
+          iso="SHIFT-OS-1.0-amd64.iso"
+          listing="$(xorriso -indev "$iso" -find /live -maxdepth 1 -type f 2>&1)"
+          printf '%s\n' "$listing"
+          printf '%s\n' "$listing" | grep -qi "vmlinuz"
+          printf '%s\n' "$listing" | grep -qi "initrd"
+          echo "Verified: ISO contains both the live kernel and initrd."
       - name: Upload ISO and checksum
         uses: actions/upload-artifact@v4
         with:
